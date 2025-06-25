@@ -3,11 +3,19 @@ import connectMongo from "@/lib/mongodb";
 import DaftarPengajuan from "@/models/daftar_pengajuan";
 import { ObjectId } from "mongodb";
 
-// PATCH pengajuan (update status/alasan)
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+// Buat type agar lebih eksplisit (Next.js 15 strict typing butuh ini)
+type Context = {
+  params: {
+    id: string;
+  };
+};
+
+// PATCH pengajuan
+export async function PATCH(req: NextRequest, context: Context) {
   try {
     await connectMongo();
-    const { id } = params;
+    const { id } = context.params;
+
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "ID pengajuan tidak valid" }, { status: 400 });
     }
@@ -26,10 +34,11 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // DELETE pengajuan
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, context: Context) {
   try {
     await connectMongo();
-    const { id } = params;
+    const { id } = context.params;
+
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "ID pengajuan tidak valid" }, { status: 400 });
     }
