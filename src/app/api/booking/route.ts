@@ -1,32 +1,51 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import connectMongo from "@/lib/mongodb";
 import DaftarPengajuan from "@/models/daftar_pengajuan";
+import { ObjectId } from "mongodb";
 
-export async function POST(req: Request) {
+// PATCH
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const { id } = params;
+
   try {
     await connectMongo();
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "ID pengajuan tidak valid" }, { status: 400 });
+    }
+
     const body = await req.json();
-    const pengajuan = await DaftarPengajuan.create({
-      kontrakanId: body.kontrakanId,
-      uid: body.uid,
-      nama: body.nama,
-      noHp: body.noHp,
-      tanggalMulai: body.tanggalMulai,
-      durasi: body.durasi,
-      catatan: body.catatan,
-      status: "pending",
-    });
-    return NextResponse.json({ data: pengajuan });
+    const updated = await DaftarPengajuan.findByIdAndUpdate(id, { $set: body }, { new: true });
+
+    if (!updated) {
+      return NextResponse.json({ error: "Pengajuan tidak ditemukan" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: updated });
   } catch (error) {
-    return NextResponse.json({ error: "Gagal mengajukan sewa" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal update status pengajuan" }, { status: 500 });
   }
 }
-export async function GET() {
+
+// DELETE
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  const { id } = params;
+
   try {
     await connectMongo();
-    const data = await DaftarPengajuan.find().sort({ createdAt: -1 }).lean();
-    return NextResponse.json({ data });
+
+    if (!ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "ID pengajuan tidak valid" }, { status: 400 });
+    }
+
+    const deleted = await DaftarPengajuan.findByIdAndDelete(id);
+
+    if (!deleted) {
+      return NextResponse.json({ error: "Pengajuan tidak ditemukan" }, { status: 404 });
+    }
+
+    return NextResponse.json({ data: deleted });
   } catch (error) {
-    return NextResponse.json({ error: "Gagal mengambil data" }, { status: 500 });
+    return NextResponse.json({ error: "Gagal menghapus pengajuan" }, { status: 500 });
   }
 }
